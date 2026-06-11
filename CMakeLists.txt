@@ -25,6 +25,7 @@ set(COMMON_WARNINGS
 
 add_library(iot_core 
     src/app.cpp 
+    src/config.cpp 
     src/sensor.cpp 
     src/telemetry.cpp 
     src/logger.cpp 

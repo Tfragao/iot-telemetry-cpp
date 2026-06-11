@@ -1,6 +1,5 @@
 #include "../include/iot/app.hpp"
 #include "../include/iot/logger.hpp"
-#include "../include/iot/menu.hpp"
 #include "../include/iot/sensor.hpp"
 #include "../include/iot/telemetry.hpp"
 
@@ -34,46 +33,36 @@ namespace iot::app {
         }  
     }
 
-    int run() {
-        const std::string device_id{"rpi4-gateway-001"};
-        logger::CsvLogger csv_logger{"data/telemetry.csv"};
+    int run(const config::AppConfig& config){
+        logger::CsvLogger csv_logger{config.log_file_path};
 
-        if (!csv_logger.is_open()) {
+        if (!csv_logger.is_open())
+        {
             std::cerr << "Failed to open telemetry log file\n";
             return 1;
         }
 
         csv_logger.write_header();
+
         std::vector<telemetry::TelemetryPacket> history;
-        bool running{true};
 
-        while (running) {
-            menu::print_menu();
-            const menu::MenuChoice choice{menu::read_choice()};
+        for (int count{}; count < config.samples; ++count)
+        {
+            const sensor::SensorReading reading{sensor::generate_fake_reading()};
 
-            switch(choice) {
-                case menu::MenuChoice::ReadOnce:
-                    collect_and_print(device_id, history, csv_logger);
-                    break;
-                case menu::MenuChoice::ReadMultiple:
-                    for (int count{}; count < reading_per_batch; ++count) {
-                        collect_and_print(device_id, history, csv_logger);
-                    }
-                    break;
-                case menu::MenuChoice::ShowAverage:
-                    std::cout << "Average temperature: "
-                              << telemetry::average_temperature(history)
-                              << " C\n\n";
-                    break;
-                case menu::MenuChoice::Exit:
-                    std::cout << "Exiting application...\n";
-                    running = false;
-                    break;
-                case menu::MenuChoice::Invalid:
-                    std::cout << "Invalide option. Please try again\n\n";
-                    break;
-            }
+            const telemetry::TelemetryPacket packet{
+                telemetry::create_packet(config.device_id, reading)
+            };
+
+            telemetry::print_packet(packet);
+            csv_logger.write_packet(packet);
+            history.push_back(packet);
         }
+
+        std::cout << "Average temperature: "
+                << telemetry::average_temperature(history)
+                << " C\n";
+
         return 0;
     }
 }

@@ -1,0 +1,6 @@
+build/
+*.o
+*.out
+*.log
+data/*.csv
+.vscode/*.log

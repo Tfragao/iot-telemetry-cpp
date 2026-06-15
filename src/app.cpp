@@ -6,36 +6,49 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <filesystem>
 
 namespace iot::app {
     namespace {
-        constexpr int reading_per_batch{5};
 
-        telemetry::TelemetryPacket collect_packet(const std::string& device_id) {
-            const sensor::SensorReading reading{
-                sensor::generate_fake_reading()
-            };
-            return telemetry::create_packet(device_id, reading);
+        void print_verbose_config(const config::AppConfig& config) {
+            std::cout << "Configuration:\n";
+            std::cout << "  Device ID: " << config.device_id << "\n";
+            std::cout << "  Mode: " << config::sensor_mode_to_text(config.mode) << "\n";
+            std::cout << "  Samples: " << config.samples << "\n";
+
+            if (config.mode == config::SensorMode::Uart) {
+                std::cout << "  Port: " << config.port << "\n";
+                std::cout << "  Baud rate: " << config.baud_raute << "\n";
+            }
+            std::cout << "\n";
         }
 
-        void collect_and_print(const std::string& device_id,
-                               std::vector<telemetry::TelemetryPacket>& history,
-                               logger::CsvLogger& csv_logger) {
-            const telemetry::TelemetryPacket packet {
-                collect_packet(device_id)
-            };
+        sensor::SensorReading read_sensor_by_mode( const config::AppConfig& config) {
+            switch (config.mode) {
+                case config::SensorMode::Fake:
+                    return sensor::generate_fake_reading();
+                case config::SensorMode::System:
+                    return sensor::read_system_reading();
+                case config::SensorMode::Uart:
+                    return sensor::read_uart_placeholder_reading(config.port, config.baud_raute);
+            }
 
-            telemetry::print_packet(packet);
-            csv_logger.write_packet(packet);
-
-            history.push_back(packet);
-
-        }  
+            return sensor::generate_fake_reading();
+        }
     }
 
     int run(const config::AppConfig& config){
-        logger::CsvLogger csv_logger{config.log_file_path};
+        if (config.verbose) {
+            print_verbose_config(config);
+        }
 
+        const std::filesystem::path log_path{config.log_file_path};
+        if (log_path.has_parent_path()) {
+            std::filesystem::create_directories(log_path.parent_path());
+        }
+        
+        logger::CsvLogger csv_logger{config.log_file_path};
         if (!csv_logger.is_open())
         {
             std::cerr << "Failed to open telemetry log file\n";
@@ -48,7 +61,7 @@ namespace iot::app {
 
         for (int count{}; count < config.samples; ++count)
         {
-            const sensor::SensorReading reading{sensor::generate_fake_reading()};
+            const sensor::SensorReading reading{read_sensor_by_mode(config)};
 
             const telemetry::TelemetryPacket packet{
                 telemetry::create_packet(config.device_id, reading)

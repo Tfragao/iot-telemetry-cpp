@@ -1,6 +1,8 @@
 #include "../include/iot/sensor.hpp" 
 #include <random>
-
+#include <fstream>
+#include <string>
+#include <iostream>
 namespace iot::sensor {
     namespace {
         double random_double(double min_value, double max_value) {
@@ -23,6 +25,23 @@ namespace iot::sensor {
             std::bernoulli_distribution distribution{0.5};
             return distribution(generator);
         }
+
+        double read_linux_cpu_temperature() {
+            std::ifstream temperature_file{"/sys/class/thermal/thermal_zone0/temp"};
+
+            if (!temperature_file) {
+                return random_double(30.0, 55.0);
+            }
+
+            int temperature_milli_celsius{};
+            temperature_file >> temperature_milli_celsius;
+
+            if (!temperature_file) {
+                return random_double(30.0, 55.0);
+            }
+
+            return static_cast<double> (temperature_milli_celsius) / 1000.0;
+        }
     }
 
     SensorReading generate_fake_reading() {
@@ -32,6 +51,35 @@ namespace iot::sensor {
             .voltage_volts = random_double(3.0, 5.2),
             .digital_inputs = {random_bool(), random_bool(), random_bool(), random_bool()}
         };
+        return reading;
+    }
+
+    SensorReading read_system_reading() {
+        const double cpu_temperature{read_linux_cpu_temperature()};
+
+        SensorReading reading{
+            .temperature_celsius = cpu_temperature,
+            .humidity_percent = random_double(35.0, 70.0),
+            .voltage_volts = random_double(4.7, 5.1),
+            .digital_inputs = {false, true, false, true}
+        };
+
+        return reading;
+    }
+
+    SensorReading read_uart_placeholder_reading(const std::string& port, int baud_rate) {
+        std::cout << "UART mode selected, but real serial reading is not implemented yet.\n";
+        std::cout << "Using simulated UART-like telemetry for now.\n";
+        std::cout << "  Configured port: " << port << '\n';
+        std::cout << "  Configured baud rate: " << baud_rate << '\n';
+
+        SensorReading reading {
+            .temperature_celsius = random_double(22.0, 38.0),
+            .humidity_percent = random_double(30.0, 80.0),
+            .voltage_volts = random_double(3.1, 3.4),
+            .digital_inputs = {true, false, true, false}
+        };
+
         return reading;
     }
 

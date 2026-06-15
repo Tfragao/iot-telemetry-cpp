@@ -16,7 +16,7 @@ namespace iot::sensor {
 
     SensorReading generate_fake_reading();
     SensorReading read_system_reading();
-    SensorReading read_uart_placeholder_reading(const std::string& port, int baud_rate);
+    SensorReading read_uart_reading(const std::string& port, int baud_rate);
 
     bool is_temperature_valid(double temperature_celsius);
     bool is_humidity_valid(double humidity_percent);

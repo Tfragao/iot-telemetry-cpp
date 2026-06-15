@@ -31,7 +31,7 @@ namespace iot::app {
                 case config::SensorMode::System:
                     return sensor::read_system_reading();
                 case config::SensorMode::Uart:
-                    return sensor::read_uart_placeholder_reading(config.port, config.baud_raute);
+                    return sensor::read_uart_reading(config.port, config.baud_raute);
             }
 
             return sensor::generate_fake_reading();
@@ -59,17 +59,26 @@ namespace iot::app {
 
         std::vector<telemetry::TelemetryPacket> history;
 
-        for (int count{}; count < config.samples; ++count)
-        {
-            const sensor::SensorReading reading{read_sensor_by_mode(config)};
-
-            const telemetry::TelemetryPacket packet{
-                telemetry::create_packet(config.device_id, reading)
-            };
-
-            telemetry::print_packet(packet);
-            csv_logger.write_packet(packet);
-            history.push_back(packet);
+        for (int count{}; count < config.samples; ++count) {
+            try {
+                const sensor::SensorReading reading{read_sensor_by_mode(config)};
+                const telemetry::TelemetryPacket packet{
+                    telemetry::create_packet(config.device_id, reading)
+                };
+                telemetry::print_packet(packet);
+                csv_logger.write_packet(packet);
+                history.push_back(packet);
+            
+            } catch(const std::exception& e) {
+                std::cerr << "Failed to collect sample "
+                          << count + 1
+                          << ": "
+                          << e.what()
+                          << "\n";
+                return 1;
+            }
+            
+            
         }
 
         std::cout << "Average temperature: "

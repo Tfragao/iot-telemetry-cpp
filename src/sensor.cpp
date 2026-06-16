@@ -68,98 +68,6 @@ namespace iot::sensor {
             }
         }
 
-        class SerailPort {
-            public:
-                SerailPort(const std::string& port, int baud_rate) {
-                    fd_ = ::open(port.c_str(), O_RDWR | O_NOCTTY);
-                    if (fd_ < 0) {
-                        throw std::runtime_error {
-                            "Failed to open serial port " + port + ": " + std::strerror(errno)
-                        };
-                    }
-
-                    configure(baud_rate);
-                }
-
-                ~SerailPort() {
-                    if (fd_ > 0) {
-                        ::close(fd_);
-                    }
-                }
-
-                SerailPort(const SerailPort&) = delete;
-                SerailPort& operator=(const SerailPort&) = delete;
-
-                SerailPort(SerailPort&&) = delete;
-                SerailPort& operator=(SerailPort&&) = delete;
-
-                std::string read_line() {
-                    std::string line;
-                    char byte{};
-
-                    while(true) {
-                        const ssize_t bytes_read{::read(fd_, &byte, 1)};
-                        if (bytes_read < 0) {
-                            throw std::runtime_error {
-                                std::string{"Failed to read from serail port: "} + std::strerror(errno)
-                            };
-                        }
-                        if (bytes_read == 0) {
-                            continue;
-                        }
-                        if (byte == '\n') {
-                            break;
-                        }
-                        if (byte != '\r') {
-                            line.push_back(byte);
-                        }
-                    }
-                    return line;
-                }
-            private:
-                void configure(int baud_rate) {
-                    termios tty{};
-                    if (::tcgetattr(fd_, &tty) != 0) {
-                        throw std::runtime_error {
-                            std::string{"tcgetattr failed: "} + std::strerror(errno)
-                        };
-                    }
-
-                    const speed_t speed{to_termios_baud_rate(baud_rate)};
-                    ::cfsetispeed(&tty, speed);
-                    ::cfsetospeed(&tty, speed);
-
-                    tty.c_cflag &= static_cast<unsigned int>(~PARENB); // No parity
-                    tty.c_cflag &= static_cast<unsigned int>(~CSTOPB); // 1  stop bit
-                    tty.c_cflag &= static_cast<unsigned int>(~CSIZE);
-                    tty.c_cflag |= CS8;                                 // 8 data bits
-                    tty.c_cflag &= static_cast<unsigned int>(~CRTSCTS); // No hardware flow control
-                    tty.c_cflag |= CREAD | CLOCAL;
-
-                    tty.c_lflag &= static_cast<unsigned int>(~ICANON);
-                    tty.c_lflag &= static_cast<unsigned int>(~ECHO);
-                    tty.c_cflag &= static_cast<unsigned int>(~ECHOE);
-                    tty.c_lflag &= static_cast<unsigned int>(~ECHONL);
-                    tty.c_lflag &= static_cast<unsigned int>(~ISIG);
-
-                    tty.c_iflag &= static_cast<unsigned int>(~(IXON | IXOFF | IXANY));
-                    tty.c_iflag &= static_cast<unsigned int>(~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL));
-
-                    tty.c_oflag &= static_cast<unsigned int>(~OPOST);
-                    tty.c_oflag &= static_cast<unsigned int>(~ONLCR);
-
-                    tty.c_cc[VTIME] = 10; // 1 second timeout
-                    tty.c_cc[VMIN] = 0;
-
-                    if (::tcsetattr(fd_, TCSANOW, &tty) != 0) {
-                        throw std::runtime_error{
-                            std::string{"tcsetattr failed: "} + std::strerror(errno)
-                        };
-                    }
-                }
-                int fd_{-1};
-        };
-
         bool parse_bool_value(const std::string& value) {
             return value == "1" || value == "true" || value == "HIGH";
         }
@@ -212,6 +120,106 @@ namespace iot::sensor {
         }
     }
 
+    UartSensorReader::UartSensorReader(const std::string& port, int baud_rate) {
+            fd_ = ::open(port.c_str(), O_RDWR | O_NOCTTY);
+            if (fd_ < 0) {
+                throw std::runtime_error {
+                    "Failed to open serial port " + port + ": " + std::strerror(errno)
+                };
+            }
+            configure(baud_rate);
+        }
+
+    UartSensorReader::~UartSensorReader() {
+        if (fd_ >= 0) {
+        ::close(fd_);
+        }
+    }
+    
+    void UartSensorReader::configure(int baud_rate) {
+        termios tty{};
+        if (::tcgetattr(fd_, &tty) != 0) {
+            throw std::runtime_error {
+                std::string{"tcgetattr failed: "} + std::strerror(errno)
+            };
+        }
+        const speed_t speed{to_termios_baud_rate(baud_rate)};
+        if (::cfsetispeed(&tty, speed) != 0) {
+            throw std::runtime_error{
+                std::string{"cfsetisspeed failed: "} + std::strerror(errno)
+            };
+        }
+        if (::cfsetospeed(&tty, speed) != 0) {
+            throw std::runtime_error{
+                std::string{"cfsetospeed failed: "} + std::strerror(errno)
+            };
+        }
+
+        tty.c_cflag &= ~PARENB; // No parity
+        tty.c_cflag &= ~CSTOPB; // 1  stop bit
+        tty.c_cflag &= ~CSIZE;
+        tty.c_cflag |= CS8;     // 8 data bits
+        tty.c_cflag |= CREAD;
+        tty.c_cflag |= CLOCAL; 
+        
+        #ifdef CRTSCTS
+                tty.c_cflag &= ~CRTSCTS; // No hardware flow control
+        #endif 
+        tty.c_lflag &= ~ICANON;
+        tty.c_lflag &= ~ECHO;
+        tty.c_cflag &= ~ECHOE;
+        tty.c_lflag &= ~ECHONL;
+        tty.c_lflag &= ~ISIG;
+
+        tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+        tty.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL);
+
+        tty.c_oflag &= ~OPOST;
+        tty.c_oflag &= ~ONLCR;
+
+        tty.c_cc[VTIME] = 10; // 1 second timeout
+        tty.c_cc[VMIN] = 0;
+
+        if (::tcsetattr(fd_, TCSANOW, &tty) != 0) {
+            throw std::runtime_error{
+                std::string{"tcsetattr failed: "} + std::strerror(errno)
+            };
+        }
+    }
+
+    std::string UartSensorReader::read_line() {
+        std::string line;
+        char byte{};
+
+        while (true) {
+            const ssize_t bytes_read{::read(fd_, &byte, 1)};
+            if (bytes_read < 0) {
+                throw std::runtime_error {
+                    std::string{"Failed to read from serail port: "} + std::strerror(errno)
+                };
+            }
+
+            if (bytes_read == 0) {
+                continue;
+            }
+
+            if (byte == '\n') {
+                break;
+            }
+            
+            if (byte != '\r') {
+                line.push_back(byte);
+            }
+        }
+        return line;
+    }
+    
+    SensorReading UartSensorReader::read() {
+        const std::string line{read_line()};
+        std::cout << "UART RX: " << line << "\n";
+        return parse_uart_line(line);
+    }
+
     SensorReading generate_fake_reading() {
         SensorReading reading {
             .temperature_celsius = random_double(18.0, 45.0),
@@ -231,21 +239,7 @@ namespace iot::sensor {
             .voltage_volts = random_double(4.7, 5.1),
             .digital_inputs = {false, true, false, true}
         };
-
         return reading;
-    }
-
-    /**
-     * Important: this opens the port every time you read one sample.
-     * It is okay for first implementation, but later I will improve it 
-     * by opening the port once and reading multiple samples.
-     */
-    SensorReading read_uart_reading(const std::string& port, int baud_rate) {
-        SerailPort serial_port{port, baud_rate};
-        const std::string line{serial_port.read_line()};
-
-        std::cout << "UART RX: " << line << '\n';
-        return parse_uart_line(line);
     }
 
     bool is_temperature_valid(double temperature_celsius) {

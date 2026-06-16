@@ -13,4 +13,4 @@ echo "Testing UART mode without physical HW using virtual serial ports"
 #echo "And from another terminal, send data to the other side:"
 #echo "for example: echo "TEMP=25.4,HUM=51.2,VOLT=3.3,DI0=1,DI1=0,DI2=1,DI3=0" > /dev/pts/3"
 
-./build/debug/iot_telemetry_app --mode uart --port /dev/pts/2 --baud 115200 --samples 1 --verbose
+./build/debug/iot_telemetry_app --mode uart --port /dev/pts/2 --baud 115200 --samples 3 --verbose

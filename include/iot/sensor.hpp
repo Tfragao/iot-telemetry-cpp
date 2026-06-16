@@ -14,10 +14,29 @@ namespace iot::sensor {
         std::array<bool, digital_input_count> digital_inputs{};
     };
 
+    class UartSensorReader {
+        public:
+            UartSensorReader(const std::string& port, int baud_rate);
+            ~UartSensorReader();
+            
+            UartSensorReader(const UartSensorReader&) = delete;
+            UartSensorReader& operator=(const UartSensorReader&) = delete;
+
+            UartSensorReader(UartSensorReader&&) = delete;
+            UartSensorReader&& operator=(const UartSensorReader&&) = delete;
+
+            SensorReading read();
+
+        private:
+            void configure(int baud_rate);
+            std::string read_line();
+
+            int fd_{-1};
+    };
+
     SensorReading generate_fake_reading();
     SensorReading read_system_reading();
-    SensorReading read_uart_reading(const std::string& port, int baud_rate);
-
+    
     bool is_temperature_valid(double temperature_celsius);
     bool is_humidity_valid(double humidity_percent);
     bool is_voltage_valid(double voltage_volts);

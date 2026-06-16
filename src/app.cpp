@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <stdexcept>
 
 namespace iot::app {
     namespace {
@@ -31,7 +32,7 @@ namespace iot::app {
                 case config::SensorMode::System:
                     return sensor::read_system_reading();
                 case config::SensorMode::Uart:
-                    return sensor::read_uart_reading(config.port, config.baud_raute);
+                   throw std::runtime_error{"UART mode is handled separately"};
             }
 
             return sensor::generate_fake_reading();
@@ -59,32 +60,42 @@ namespace iot::app {
 
         std::vector<telemetry::TelemetryPacket> history;
 
-        for (int count{}; count < config.samples; ++count) {
-            try {
-                const sensor::SensorReading reading{read_sensor_by_mode(config)};
-                const telemetry::TelemetryPacket packet{
-                    telemetry::create_packet(config.device_id, reading)
-                };
-                telemetry::print_packet(packet);
-                csv_logger.write_packet(packet);
-                history.push_back(packet);
-            
-            } catch(const std::exception& e) {
-                std::cerr << "Failed to collect sample "
-                          << count + 1
-                          << ": "
-                          << e.what()
-                          << "\n";
-                return 1;
-            }
-            
-            
-        }
+        try {
+            if (config.mode == config::SensorMode::Uart) {
+                sensor::UartSensorReader uart_reader{config.port, config.baud_raute};
 
+                for (int count{}; count < config.samples; ++count) {
+                    const sensor::SensorReading reading{uart_reader.read()};
+                    const telemetry::TelemetryPacket packet{
+                        telemetry::create_packet(config.device_id, reading)};
+                  
+                    telemetry::print_packet(packet);
+                    csv_logger.write_packet(packet);
+                    history.push_back(packet);
+                }
+
+            } else {
+                for (int count{}; count < config.samples; ++count) {
+                    const sensor::SensorReading reading{read_sensor_by_mode(config)};
+                    const telemetry::TelemetryPacket packet{
+                        telemetry::create_packet(config.device_id, reading)
+                    };
+
+                    telemetry::print_packet(packet);
+                    csv_logger.write_packet(packet);
+                    history.push_back(packet);
+                }
+
+            }
+        }catch (std::exception& e) {
+            std::cerr << "Failed to collect telemetry: "
+                      << e.what()
+                      <<"\n";
+            return 1;
+        }
         std::cout << "Average temperature: "
                 << telemetry::average_temperature(history)
                 << " C\n";
-
         return 0;
     }
 }

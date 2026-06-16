@@ -1,0 +1,43 @@
+name: CMake build 
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+jobs:
+    build-linux:
+        name: Build and smoke test on Ubuntu
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Install dependencies 
+              run: | 
+                sudo apt-get update
+                sudo apt-get install -y cmake ninja-build g++ 
+            
+            - name: Configure 
+              run: cmake --preset debug 
+            
+            - name: Build
+              run: cmake --build --preset debug
+            
+            - name: Run fake mode smoke test
+              run: | 
+                ./build/debug/iot_telemetry_app \
+                    --mode fake \
+                    --samples 3 \
+                    --log data/ci-fake.csv \
+                    --verbose 
+            - name: Run system mode smoke test 
+              run: |
+                ./build/debug/iot_telemetry_app \
+                    --mode system \
+                    --samples 3 \
+                    --log data/ci-system.csv \
+                    --verbose

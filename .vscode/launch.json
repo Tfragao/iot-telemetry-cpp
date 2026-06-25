@@ -1,0 +1,105 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Fake Mode",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/iot_telemetry_app",
+            "args": [
+                "--device",
+                "rpi4-gateway-001",
+                "--samples",
+                "5",
+                "--mode",
+                "fake",
+                "--log",
+                "data/telemetry.csv",
+                "--verbose"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug System Mode",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/iot_telemetry_app",
+            "args": [
+                "--device",
+                "rpi4-gateway-001",
+                "--samples",
+                "5",
+                "--mode",
+                "system",
+                "--log",
+                "data/system.csv",
+                "--verbose"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug UART Mode - Virtual Serial",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/iot_telemetry_app",
+            "args": [
+                "--device",
+                "rpi4-gateway-001",
+                "--samples",
+                "3",
+                "--mode",
+                "uart",
+                "--port",
+                "/dev/pts/2",
+                "--baud",
+                "115200",
+                "--log",
+                "data/uart-virtual.csv",
+                "--verbose"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb"
+        },
+        {
+            "name": "Debug UART Mode - Real USB Serial",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/debug/iot_telemetry_app",
+            "args": [
+                "--device",
+                "rpi4-gateway-001",
+                "--samples",
+                "1",
+                "--mode",
+                "uart",
+                "--port",
+                "/dev/ttyUSB0",
+                "--baud",
+                "115200",
+                "--log",
+                "data/uart.csv",
+                "--verbose"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb"
+        }
+    ]
+}

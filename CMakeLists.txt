@@ -30,6 +30,9 @@ add_library(iot_core
     src/telemetry.cpp 
     src/logger.cpp 
     src/menu.cpp
+    src/fake_sensor_reader.cpp 
+    src/system_sensor_reader.cpp 
+    src/uart_sensor_reader.cpp 
 )
 
 target_include_directories(iot_core

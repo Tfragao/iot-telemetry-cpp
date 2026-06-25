@@ -1,13 +1,18 @@
 #include "../include/iot/app.hpp"
+
+#include "../include/iot/sensor_reader.hpp"
+#include "../include/iot/fake_sensor_reader.hpp"
+#include "../include/iot/system_sensor_reader.hpp"
+#include "../include/iot/uart_sensor_reader.hpp"
+
 #include "../include/iot/logger.hpp"
-#include "../include/iot/sensor.hpp"
 #include "../include/iot/telemetry.hpp"
 
-#include <iostream>
-#include <vector>
-#include <string>
 #include <filesystem>
+#include <iostream>
 #include <stdexcept>
+#include <vector>
+#include <memory>
 
 namespace iot::app {
     namespace {
@@ -25,17 +30,42 @@ namespace iot::app {
             std::cout << "\n";
         }
 
-        sensor::SensorReading read_sensor_by_mode( const config::AppConfig& config) {
+        std::unique_ptr<sensor::ISensorReader> create_sensor_reader(const config::AppConfig& config) {
             switch (config.mode) {
                 case config::SensorMode::Fake:
-                    return sensor::generate_fake_reading();
+                    return std::make_unique<sensor::FakeSensorReader>();
+               
                 case config::SensorMode::System:
-                    return sensor::read_system_reading();
+                    return std::make_unique<sensor::SystemSensorReader>();
+                
                 case config::SensorMode::Uart:
-                   throw std::runtime_error{"UART mode is handled separately"};
+                    return std::make_unique<sensor::UartSensorReader> (
+                        config.port,
+                        config.baud_raute
+                    );   
+            }
+            throw std::runtime_error{"Unsupported sensor mode"};
+        }
+
+        bool prepare_log_directory(const std::string& log_file_path) {
+            const std::filesystem::path log_path{log_file_path};
+            if (!log_path.has_parent_path()) {
+                return true;
             }
 
-            return sensor::generate_fake_reading();
+            std::error_code error_code;
+            std::filesystem::create_directories(log_path.parent_path(), error_code);
+            if (error_code) {
+                std::cerr << "Failed to create log directory: "
+                          << log_path.parent_path()
+                          << "\n";
+                std::cerr << "Reason: "
+                          << error_code.message()
+                          << "\n";
+                return false;
+            }
+           
+            return true;
         }
     }
 
@@ -44,15 +74,16 @@ namespace iot::app {
             print_verbose_config(config);
         }
 
-        const std::filesystem::path log_path{config.log_file_path};
-        if (log_path.has_parent_path()) {
-            std::filesystem::create_directories(log_path.parent_path());
+        if (!prepare_log_directory(config.log_file_path)) {
+            return 1;
         }
-        
+
         logger::CsvLogger csv_logger{config.log_file_path};
         if (!csv_logger.is_open())
         {
-            std::cerr << "Failed to open telemetry log file\n";
+            std::cerr << "Failed to open telemetry log file\n"
+                      << config.log_file_path
+                      << "\n";
             return 1;
         }
 
@@ -61,38 +92,29 @@ namespace iot::app {
         std::vector<telemetry::TelemetryPacket> history;
 
         try {
-            if (config.mode == config::SensorMode::Uart) {
-                sensor::UartSensorReader uart_reader{config.port, config.baud_raute};
-
+                const std::unique_ptr<sensor::ISensorReader> sensor_reader {
+                    create_sensor_reader(config)
+                };
                 for (int count{}; count < config.samples; ++count) {
-                    const sensor::SensorReading reading{uart_reader.read()};
-                    const telemetry::TelemetryPacket packet{
-                        telemetry::create_packet(config.device_id, reading)};
-                  
-                    telemetry::print_packet(packet);
-                    csv_logger.write_packet(packet);
-                    history.push_back(packet);
-                }
+                    
+                    const sensor::SensorReading reading {sensor_reader->read()};
 
-            } else {
-                for (int count{}; count < config.samples; ++count) {
-                    const sensor::SensorReading reading{read_sensor_by_mode(config)};
-                    const telemetry::TelemetryPacket packet{
+                    const telemetry::TelemetryPacket packet {
                         telemetry::create_packet(config.device_id, reading)
                     };
 
                     telemetry::print_packet(packet);
                     csv_logger.write_packet(packet);
                     history.push_back(packet);
-                }
 
-            }
-        }catch (std::exception& e) {
+                }
+        } catch (const std::exception& exception) {
             std::cerr << "Failed to collect telemetry: "
-                      << e.what()
-                      <<"\n";
+                      << exception.what()
+                      << "\n";
             return 1;
         }
+        
         std::cout << "Average temperature: "
                 << telemetry::average_temperature(history)
                 << " C\n";

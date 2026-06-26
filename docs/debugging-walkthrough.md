@@ -15,17 +15,19 @@ build/debug/iot_telemetry_app
 ## 2. Debug configurations 
 
 The project provides multiple VS Code debug configurations in .vscode/launch.json:
+```bash
 - Debug Fake Mode
 - Debug System Mode
 - Debug UART Mode - Virtual Serial 
 - Debug UART Mode - Real USB Serial
+``
 
 Use the Run and Debug panel in VS Code to select the desired configuration.
 
 ## 3. Recommended breakpoints
 
 Useful breakpoints for understanding the project flow:
-
+```bash
 main()
  -> config::parse_arguments()
  -> app::run()
@@ -40,7 +42,7 @@ main()
  -> telemetry::create_packet()
  -> telemetry::evaluate_status()
  -> logger::CsvLogger::write_packet()
-
+``
 ## 4. Debugging fake mode
 
 Select:
@@ -50,6 +52,7 @@ Debug Fake Mode
 ```
 This mode does not require hardware. It generates fake sensor reading and writes telemetry to CSV.
 Expected flow:
+```bash
 main()
     -> parse_arguments()
     -> app::run()
@@ -57,7 +60,7 @@ main()
     -> FakeSensorReader::read()
     -> telemetry::create_packet()
     -> CsvLogger::write_packet()
-
+``
 ## 5. Debugging system mode
 
 Select:
@@ -70,6 +73,7 @@ This mode reads Linux system data, such as CPU temperature from:
 ```
 If the file is not available, the implementation may fall back to simulated values.
 Expected flow:
+```bash
 main()
     -> parse_arguments()
     -> app::run()
@@ -77,7 +81,7 @@ main()
     -> SystemSensorReader::read()
     -> telemetry::create_packet()
     -> CsvLogger::write_packet()
-
+``
 ## 6. Debugging UART mode with virtual serial ports
 
 UART mode can be tested without physical hardware using socat.
@@ -106,6 +110,7 @@ echo "TEMP=31.7,HUM=48.0,VOLT=3.2,DI0=0,DI1=0,DI2=1,DI3=1" > /dev/pts/3
 echo "TEMP=42.1,HUM=61.5,VOLT=3.4,DI0=1,DI1=1,DI2=0,DI3=0" > /dev/pts/3
 ```
 Expected UART flow:
+```bash
 main()
     -> parse_arguments()
     -> app::run()
@@ -117,7 +122,7 @@ main()
     -> parse_uart_line()
     -> telemetry::create_packet()
     -> CsvLogger::write_packet()
-
+``
 ## 7. UART message format
 
 The expected UART input format is:
@@ -174,3 +179,4 @@ Command-line arguments
     -> telemetry packet creation 
     -> status evaluation 
     -> CSV logging 
+``

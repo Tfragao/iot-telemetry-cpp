@@ -3,4 +3,6 @@ build/
 *.out
 *.log
 data/*.csv
-.vscode/*.log
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json

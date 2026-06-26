@@ -27,19 +27,19 @@ Use the Run and Debug panel in VS Code to select the desired configuration.
 Useful breakpoints for understanding the project flow:
 
 main()
-config::parse_arguments()
-app::run()
-create_sensor_reader()
-FakeSensorReader::read()
-SystemSensorReader::read()
-UartSensorReader::UartSensorReader()
-UartSensorReader::configure()
-UartSensorReader::read()
-UartSensorReader::read_line()
-parse_uart_line()
-telemetry::create_packet()
-telemetry::evaluate_status()
-logger::CsvLogger::write_packet()
+ -> config::parse_arguments()
+ -> app::run()
+ -> create_sensor_reader()
+ -> FakeSensorReader::read()
+ -> SystemSensorReader::read()
+ -> UartSensorReader::UartSensorReader()
+ -> UartSensorReader::configure()
+ -> UartSensorReader::read()
+ -> UartSensorReader::read_line()
+ -> parse_uart_line()
+ -> telemetry::create_packet()
+ -> telemetry::evaluate_status()
+ -> logger::CsvLogger::write_packet()
 
 ## 4. Debugging fake mode
 
@@ -137,19 +137,19 @@ Each UART message should end with a newline character.
 
 ### The app waits forever in UART mode
 
-This usually means the app is waiting inside read() for UART data.
+This usually means the app is waiting inside read() for UART data.<br>
 Send a valid message to the other virtual serial port
 
-### The wrong ```bash /dev/pts/X ``` port is used 
+### The wrong /dev/pts/X port is used 
 
-Every time ```bash socat ``` is restarted, the port numbers may change.
+Every time socat is restarted, the port numbers may change.<br>
 Update the VS Code launch configuration with the new app-side port.
 
 ### CSV file is not created 
 
 Check that the working directory is correct.
 
-The VS Code launch configuration should be use the project root as ```bash cwd ```.
+The VS Code launch configuration should be use the project root as cwd.<br>
 Example:
 ```bash
 "cwd" : "${workspaceFolder}/iot-telemetry-cpp"

@@ -20,7 +20,7 @@ The project provides multiple VS Code debug configurations in .vscode/launch.jso
 - Debug System Mode
 - Debug UART Mode - Virtual Serial 
 - Debug UART Mode - Real USB Serial
-``
+```
 
 Use the Run and Debug panel in VS Code to select the desired configuration.
 
@@ -42,7 +42,7 @@ main()
  -> telemetry::create_packet()
  -> telemetry::evaluate_status()
  -> logger::CsvLogger::write_packet()
-``
+```
 ## 4. Debugging fake mode
 
 Select:
@@ -60,7 +60,7 @@ main()
     -> FakeSensorReader::read()
     -> telemetry::create_packet()
     -> CsvLogger::write_packet()
-``
+```
 ## 5. Debugging system mode
 
 Select:
@@ -81,7 +81,7 @@ main()
     -> SystemSensorReader::read()
     -> telemetry::create_packet()
     -> CsvLogger::write_packet()
-``
+```
 ## 6. Debugging UART mode with virtual serial ports
 
 UART mode can be tested without physical hardware using socat.
@@ -122,7 +122,7 @@ main()
     -> parse_uart_line()
     -> telemetry::create_packet()
     -> CsvLogger::write_packet()
-``
+```
 ## 7. UART message format
 
 The expected UART input format is:
@@ -179,4 +179,4 @@ Command-line arguments
     -> telemetry packet creation 
     -> status evaluation 
     -> CSV logging 
-``
+```

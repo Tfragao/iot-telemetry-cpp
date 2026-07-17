@@ -32,6 +32,7 @@ add_library(iot_core
     src/menu.cpp
     src/fake_sensor_reader.cpp 
     src/system_sensor_reader.cpp 
+    src/uart_protocol.cpp 
     src/uart_sensor_reader.cpp 
 )
 
@@ -59,4 +60,8 @@ target_compile_options(iot_telemetry_app
         ${COMMON_WARNINGS}
 ) 
 
-enable_testing()
+include(CTest) 
+
+if (BUILD_TESTING) 
+    add_subdirectory(tests) 
+endif()

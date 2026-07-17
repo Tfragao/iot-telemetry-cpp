@@ -27,6 +27,8 @@ jobs:
             - name: Build
               run: cmake --build --preset debug
             
+            - name: Run unit tests
+              run: ctest --test-dir build/debug/tests --output-on-failure 
             - name: Run fake mode smoke test
               run: | 
                 ./build/debug/iot_telemetry_app \

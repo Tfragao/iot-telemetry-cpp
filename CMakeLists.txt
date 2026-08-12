@@ -34,6 +34,7 @@ add_library(iot_core
     src/system_sensor_reader.cpp 
     src/uart_protocol.cpp 
     src/uart_sensor_reader.cpp 
+    src/scoped_file_descriptor.cpp 
 )
 
 target_include_directories(iot_core

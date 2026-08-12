@@ -34,24 +34,20 @@ namespace iot::sensor {
     }
 
     UartSensorReader::UartSensorReader(const std::string& port, int baud_rate) {
-            fd_ = ::open(port.c_str(), O_RDWR | O_NOCTTY);
-            if (fd_ < 0) {
+           const int raw_fd{::open(port.c_str(), O_RDWR | O_NOCTTY)};
+            if (raw_fd < 0) {
                 throw std::runtime_error {
                     "Failed to open serial port " + port + ": " + std::strerror(errno)
                 };
             }
+
+            fd_ = platform::ScopedFileDescriptor{raw_fd};
             configure(baud_rate);
         }
 
-    UartSensorReader::~UartSensorReader() {
-        if (fd_ >= 0) {
-        ::close(fd_);
-        }
-    }
-
     void UartSensorReader::configure(int baud_rate) {
         termios tty{};
-        if (::tcgetattr(fd_, &tty) != 0) {
+        if (::tcgetattr(fd_.get(), &tty) != 0) {
             throw std::runtime_error {
                 std::string{"tcgetattr failed: "} + std::strerror(errno)
             };
@@ -93,7 +89,7 @@ namespace iot::sensor {
         tty.c_cc[VTIME] = 10; // 1 second timeout
         tty.c_cc[VMIN] = 0;
 
-        if (::tcsetattr(fd_, TCSANOW, &tty) != 0) {
+        if (::tcsetattr(fd_.get(), TCSANOW, &tty) != 0) {
             throw std::runtime_error{
                 std::string{"tcsetattr failed: "} + std::strerror(errno)
             };
@@ -105,7 +101,7 @@ namespace iot::sensor {
         char byte{};
 
         while (true) {
-            const ssize_t bytes_read{::read(fd_, &byte, 1)};
+            const ssize_t bytes_read{::read(fd_.get(), &byte, 1)};
             if (bytes_read < 0) {
                 throw std::runtime_error {
                     std::string{"Failed to read from serail port: "} + std::strerror(errno)

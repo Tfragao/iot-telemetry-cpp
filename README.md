@@ -197,6 +197,8 @@ Current test coverage includes:
 - Valid UART lines
 - UART lines with spaces
 - Invalid UART lines with missing required fields
+- Non-throwing UART parser behavior using `std::optional`
+- Invalid numeric UART values
 
 ## CI
 
@@ -288,6 +290,9 @@ This project is used to practice:
 - Test automation with CTest
 - CI with GitHub Actions
 - Professional Git workflow with branches, pull requests, and releases
+- RAII-based ownership of POSIX file descriptors
+- Move-only resource wrapper design
+- Value-based error handling with `std::optional`
 
 ## Roadmap
 
@@ -307,7 +312,7 @@ Planned next steps:
 Current milestone:
 
 ```text
-v0.6.0 - Testing Foundation
+v0.6.1 - RAII and Error Handling Refactor
 ```
 
 This version introduces the first unit testing foundation with GoogleTest, CTest, UART parser tests, telemetry status tests, and CI test execution.

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include "../include/iot/uart_protocol.hpp"
+#include <optional>
 
 TEST(UartProtocolTest, ParsesValidUartLine) {
     const iot::sensor::SensorReading reading{
@@ -56,4 +57,39 @@ TEST(UartProtocolTest, ParsesLineWithSpacesAfterCommas) {
     EXPECT_FALSE(reading.digital_inputs.at(1));
     EXPECT_TRUE(reading.digital_inputs.at(2));
     EXPECT_FALSE(reading.digital_inputs.at(3));
+}
+
+TEST(UartProtocolTest, TryParseReturnsValueForValidLine) {
+    const std::optional<iot::sensor::SensorReading> reading{
+        iot::sensor::try_parse_uart_line(
+            "TEMP=25.4,HUM=51.2,VOLT=3.3,DI0=1,DI1=0,DI2=1,DI3=0"
+        )
+    };
+
+    ASSERT_TRUE(reading.has_value());
+
+    EXPECT_DOUBLE_EQ(reading->temperature_celsius, 25.4);
+    EXPECT_DOUBLE_EQ(reading->humidity_percent, 51.2);
+    EXPECT_DOUBLE_EQ(reading->voltage_volts, 3.3);
+    EXPECT_TRUE(reading->digital_inputs.at(0));
+}
+
+TEST(UartProtocolTest, TryParseReturnsEmptyOptionalForMissingRequiredField) {
+    const std::optional<iot::sensor::SensorReading> reading{
+        iot::sensor::try_parse_uart_line(
+            "TEMP=25.4,HUM=51.2,DI0=1,DI1=0,DI2=1,DI3=0"
+        )
+    };
+
+    EXPECT_FALSE(reading.has_value());
+}
+
+TEST(UartProtocolTest, TryParseReturnsEmptyOptionalForInvalidNumber) {
+    const std::optional<iot::sensor::SensorReading> reading{
+        iot::sensor::try_parse_uart_line(
+            "TEMP=abc,HUM=51.2,VOLT=3.3,DI0=1,DI1=0,DI2=1,DI3=0"
+        )
+    };
+
+    EXPECT_FALSE(reading.has_value());
 }

@@ -24,24 +24,23 @@ namespace iot::sensor {
 
     }
 
-    SensorReading parse_uart_line(const std::string& line) {
-            SensorReading reading{};
+    std::optional<SensorReading> try_parse_uart_line(const std::string& line) {
+        SensorReading reading{};
+        std::istringstream stream{line};
+        std::string token;
+        bool has_temperature{false};
+        bool has_humidity{false};
+        bool has_voltage{false};
 
-            std::istringstream stream{line};
-            std::string token;
-
-            bool has_temperature{false};
-            bool has_humidity{false};
-            bool has_voltage{false};
-
+        try {
             while (std::getline(stream, token, ',')) {
                 const std::size_t separator_pos{token.find('=')};
+                
                 if (separator_pos == std::string::npos) {
                     continue;
                 }
-
                 const std::string key{trim(token.substr(0, separator_pos))};
-                const std::string value{trim(token.substr(separator_pos + 1))};
+                const std::string value{trim(token.substr(separator_pos  + 1))};
 
                 if (key == "TEMP") {
                     reading.temperature_celsius = std::stod(value);
@@ -62,12 +61,25 @@ namespace iot::sensor {
                     reading.digital_inputs.at(3) = parse_bool_value(value);
                 }
             }
+        } catch (const std::exception&) {
+            return std::nullopt;
+        }
+        if (!has_temperature || !has_humidity || !has_voltage) {
+            return std::nullopt;
+        }
+        
+        return reading;
+    }
 
-            if (!has_temperature || !has_humidity || !has_voltage) {
-                throw std::runtime_error{
+    SensorReading parse_uart_line(const std::string& line) {
+            const std::optional<SensorReading> reading{try_parse_uart_line(line)};
+
+            if (!reading.has_value()) {
+                    throw std::runtime_error{
                     "Invalid UART line. Expected: TEMP=25.4,HUM=51.2,VOLT=3.3,DI0=1,DI1=0,DI2=1,DI3=0"
                 };
             }
-            return reading;
+
+            return reading.value();
         }
 }

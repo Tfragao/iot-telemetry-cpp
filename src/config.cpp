@@ -38,7 +38,7 @@ namespace iot::config {
             valid = false;
             return SensorMode::Fake;
         }
-    }
+    }   
 
     AppConfig parse_arguments(int argc, char* argv[]) {
         AppConfig config{};

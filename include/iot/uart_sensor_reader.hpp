@@ -1,13 +1,13 @@
 #pragma once 
 #include "sensor_reader.hpp"
+#include "scoped_file_descriptor.hpp"
 #include <string>
 
 namespace iot::sensor {
         class UartSensorReader final : public ISensorReader {
             public: 
                 UartSensorReader(const std::string& port, int baud_rate);
-                ~UartSensorReader() override;
-
+               
                 UartSensorReader(const UartSensorReader&) = delete;
                 UartSensorReader& operator=(const UartSensorReader&) = delete;
 
@@ -19,7 +19,6 @@ namespace iot::sensor {
             private:
                 void configure(int baud_rate);
                 std::string read_line();
-
-                int fd_{-1};
+                platform::ScopedFileDescriptor fd_;
         };
 }

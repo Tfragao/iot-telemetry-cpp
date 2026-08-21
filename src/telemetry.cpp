@@ -1,4 +1,5 @@
 #include "../include/iot/telemetry.hpp"
+#include "../include/iot/statistics.hpp"
 #include <iomanip>
 #include <iostream>
 
@@ -59,14 +60,19 @@ namespace iot::telemetry {
     }
 
     double average_temperature(const std::vector<TelemetryPacket>& packets) {
-         if (packets.empty()) {
-                return 0.0;
+        return statistics::average_by(
+            packets, [](const TelemetryPacket& packet) {
+                return packet.reading.temperature_celsius;
             }
-            double sum{};
-            for (const auto& packet : packets) {
-                sum +=  packet.reading.temperature_celsius;
+        );
+    }
+
+    std::size_t count_packets_with_status(const std::vector<TelemetryPacket>& packets, DeviceStatus status) {
+        return statistics::count_if(
+            packets,
+            [status](const TelemetryPacket& packet) {
+                return packet.status == status;
             }
-            return sum / static_cast<double>(packets.size());
-           
+        );
     }
 }

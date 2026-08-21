@@ -118,6 +118,12 @@ namespace iot::app {
         std::cout << "Average temperature: "
                 << telemetry::average_temperature(history)
                 << " C\n";
+        std::cout << "Warning packets: "
+                  << telemetry::count_packets_with_status(history, telemetry::DeviceStatus::Warning)
+                  << "\n";
+        std::cout << "Error packets: "
+                  << telemetry::count_packets_with_status(history, telemetry::DeviceStatus::Error)
+                  << "\n";
         return 0;
     }
 }

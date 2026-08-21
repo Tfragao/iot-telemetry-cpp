@@ -11,6 +11,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(iot_tests 
     test_telemetry.cpp 
     test_uart_protocol.cpp 
+    test_statistics.cpp 
 ) 
 
 target_link_libraries(iot_tests 

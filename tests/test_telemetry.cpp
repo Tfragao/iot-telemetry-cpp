@@ -73,3 +73,43 @@ TEST(TelemetryStatusTest, ReturnsErrorForInvalidHumidity) {
 
     EXPECT_EQ(status, iot::telemetry::DeviceStatus::Error);
 }
+
+TEST(TelemetryStatisticsTest, ComputeAverageTemperature) {
+    const std::vector<iot::telemetry::TelemetryPacket> packets{
+        iot::telemetry::create_packet(
+            "test-device",
+            make_reading(20.0, 50.0, 3.7)
+        ),
+        iot::telemetry::create_packet(
+            "test-device",
+            make_reading(30.0, 50.0, 3.7)
+        ),
+        iot::telemetry::create_packet(
+            "test-device",
+            make_reading(40.0, 50.0, 3.7)
+        )
+    };
+
+    EXPECT_DOUBLE_EQ(iot::telemetry::average_temperature(packets), 30.0);
+}
+
+TEST(TelemetryStatisticsTest, CountsPacketsWithSpecificStatus) {
+    const std::vector<iot::telemetry::TelemetryPacket> packets{
+        iot::telemetry::create_packet(
+            "test-device",
+            make_reading(25.0, 50.0, 3.7)
+        ),
+        iot::telemetry::create_packet(
+            "test-device",
+            make_reading(42.0, 50.0, 3.7)
+        ),
+        iot::telemetry::create_packet(
+            "test-device",
+            make_reading(100.0, 50.0, 3.7)
+        )
+    };
+
+    EXPECT_EQ(iot::telemetry::count_packets_with_status(packets, iot::telemetry::DeviceStatus::Ok), 1U);
+    EXPECT_EQ(iot::telemetry::count_packets_with_status(packets, iot::telemetry::DeviceStatus::Warning), 1U);
+    EXPECT_EQ(iot::telemetry::count_packets_with_status(packets, iot::telemetry::DeviceStatus::Error), 1U);
+}

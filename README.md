@@ -31,6 +31,9 @@ The project is designed to evolve gradually toward a more complete embedded Linu
 - Unit tests with GoogleTest
 - Test execution with CTest
 - GitHub Actions CI build and test workflow
+- Generic telemetry statistics utilities
+- Concept-constrained template helpers
+- Lambda-based projection and predicate logic
 
 ## Technologies Used
 
@@ -199,6 +202,8 @@ Current test coverage includes:
 - Invalid UART lines with missing required fields
 - Non-throwing UART parser behavior using `std::optional`
 - Invalid numeric UART values
+- Generic statistics utility tests
+- Telemetry average and status-count tests
 
 ## CI
 
@@ -293,6 +298,10 @@ This project is used to practice:
 - RAII-based ownership of POSIX file descriptors
 - Move-only resource wrapper design
 - Value-based error handling with `std::optional`
+- Templates and generic programming
+- C++20 concepts
+- Type-safe generic utilities
+- Lambda expressions with algorithms
 
 ## Roadmap
 
@@ -312,7 +321,7 @@ Planned next steps:
 Current milestone:
 
 ```text
-v0.6.1 - RAII and Error Handling Refactor
+v0.6.2 - Generic Telemetry Statistics
 ```
 
 This version introduces the first unit testing foundation with GoogleTest, CTest, UART parser tests, telemetry status tests, and CI test execution.

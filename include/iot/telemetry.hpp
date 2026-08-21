@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <cstddef>
 
 namespace iot::telemetry {
     enum class DeviceStatus {
@@ -27,4 +28,5 @@ namespace iot::telemetry {
     std::string status_to_text(DeviceStatus status);
     void print_packet(const TelemetryPacket& packet);
     double average_temperature(const std::vector<TelemetryPacket>& packets);
+    std::size_t count_packets_with_status(const std::vector<TelemetryPacket>& packets, DeviceStatus status);
 }
